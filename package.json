@@ -23,7 +23,7 @@
     "dev": "cross-env NODE_ENV=development node build/dev-server.js"
   },
   "dependencies": {
-    "element-ui": "^2.15.0",
+    "element-ui": "^2.15.1",
     "jquery": "^3.2.1",
     "neo4j-driver": "^4.2.2",
     "uuid": "^8.3.2",

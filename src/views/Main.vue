@@ -49,6 +49,7 @@
         session.run(query, {}).then(function (result) {
           me.clearAll = false;
           me.records = result.records;
+          console.log("neo4j 结果", result);
           session.close();
         }).catch(function (error) {
           console.log('查询语句不合法');

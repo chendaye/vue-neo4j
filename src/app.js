@@ -3,14 +3,17 @@
  */
 import Vue from 'vue'
 import ElementUI from 'element-ui';
+import 'element-ui/lib/theme-chalk/index.css';
+
+import App from './App.vue'
+Vue.use(ElementUI);
+
+import router from './router'
+
 import {
 	sync
 } from 'vuex-router-sync'
-import App from './App.vue'
-import router from './router'
-
 window.jQuery = window.$ = require('jquery/dist/jquery')
-Vue.use(ElementUI);
 const app = new Vue({
 	router,
 	...App

@@ -15,9 +15,14 @@ export default new VueRouter({
 		path: '/',
 		redirect: '/neo4j'
 	}, {
+		name: 'main',
+		path: '/main',
+		component: require('../views/Main')
+	},
+	{
 		name: 'neo4j',
 		path: '/neo4j',
-		component: require('../views/Main')
+		component: require('../views/neo4j')
 	}
 ]
 })
