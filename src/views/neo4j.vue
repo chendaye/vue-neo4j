@@ -16,7 +16,7 @@
         <el-menu-item index="4">作者文章关键词搜索</el-menu-item>
         <el-menu-item index="5">合作对象文章检索</el-menu-item>
         <el-menu-item index="6">作者相似度查询</el-menu-item>
-        <el-menu-item index="7">作者中心度询</el-menu-item>
+        <el-menu-item index="7">作者中心度查询</el-menu-item>
         <el-submenu index="8">
           <template slot="title">研究团体搜索</template>
           <el-menu-item index="8-1">结构上紧密的研究团体查询</el-menu-item>
@@ -87,7 +87,7 @@ html, body {
   flex-direction: row;
   justify-content: flex-start;
   height: 100%;
-  /* min-height: 100vh;  最小高度=屏幕高度 */
+  width: 100%;
 }
 .menu{
    /* flex-grow:1; */
@@ -99,6 +99,8 @@ html, body {
 }
 .visual {
   display: flex;
-  /* flex-grow:6; */
+  /* widows: 100%; */
+  width: 85vw;
+  /* flex-grow:10; */
 }
 </style>
