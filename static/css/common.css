@@ -12,7 +12,9 @@ ul {
   color: #333;
   line-height: 1.5
 }
-
+html,body{
+  height: 100%;
+}
 body,
 h1,
 h2,
