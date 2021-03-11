@@ -1,0 +1,94 @@
+<template>
+  <div class="search">
+    <div class="search-input">
+      <el-input v-model="keyword" placeholder="请输入查询内容"></el-input>
+    </div>
+    <div class="search-submit">
+      <el-button type="success" round>搜索</el-button>
+    </div>
+    <div class="search-switch">
+      <el-switch
+        style="display: block"
+        v-model="switchval"
+        active-color="#13ce66"
+        inactive-color="#ff4949"
+        active-text="Cypher"
+        inactive-text="关键词"
+      >
+      </el-switch>
+    </div>
+    <div class="search-switch">
+      <el-switch
+        style="display: block"
+        v-model="cypherval"
+        active-color="#13ce66"
+        inactive-color="#ff4949"
+        active-text="表格"
+        inactive-text="图"
+      >
+      </el-switch>
+    </div>
+  </div>
+</template>
+<script>
+export default {
+  name: "Search",
+  components: {},
+  props: {
+    condition: {
+      type: Number,
+      default: 0,
+    },
+  },
+  data() {
+    return {
+      keyword: "",
+      switchval: false,
+      cypherval: false,
+    };
+  },
+  watch: {
+    condition: {
+      handler() {},
+      deep: true,
+    },
+  },
+  mounted() {},
+  created() {},
+
+  methods: {
+    handleSelect(key, keyPath) {
+      console.log(key, keyPath);
+    },
+  },
+};
+</script>
+
+<style scoped>
+/* 搜索组件 */
+.search {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+  border-width: 2px;
+}
+.search .search-input {
+  flex-grow: 6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+}
+.search .search-submit {
+  display: flex;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.search .search-switch {
+  display: flex;
+  justify-content: center;
+  flex-grow: 1;
+}
+</style>
