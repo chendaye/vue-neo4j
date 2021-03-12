@@ -4,7 +4,7 @@
       <el-input v-model="keyword" placeholder="请输入查询内容"></el-input>
     </div>
     <div class="search-submit">
-      <el-button type="success" round>搜索</el-button>
+      <el-button type="success" round  @click="Submit" :loading="loading">搜索</el-button>
     </div>
     <div class="search-switch">
       <el-switch
@@ -45,6 +45,7 @@ export default {
       keyword: "",
       switchval: false,
       cypherval: false,
+      loading: false,
     };
   },
   watch: {
@@ -52,14 +53,24 @@ export default {
       handler() {},
       deep: true,
     },
+    switchval(val){
+      this.$emit("CypherKeyword", val)
+    },
+    cypherval(val){
+      this.$emit("GraphTeble", val)
+    }
   },
   mounted() {},
   created() {},
 
   methods: {
-    handleSelect(key, keyPath) {
-      console.log(key, keyPath);
+    Submit() {
+      this.setLoading(true);
+      this.$emit("Submit", this.keyword)
     },
+    setLoading(status){
+      this.loading = status;
+    }
   },
 };
 </script>

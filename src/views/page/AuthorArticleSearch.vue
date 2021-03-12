@@ -1,7 +1,11 @@
 <template>
   <div class="box">
-    <Search />
-    <div class="show"></div>
+    <div class="search">
+    <Search ref="Search" @Submit="Submit" @CypherKeyword="CypherKeyword" @GraphTeble="GraphTeble" />      
+    </div>
+    <div class="show">
+      <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
+    </div>
   </div>
 </template>
 <script>
@@ -12,33 +16,91 @@ import { setting } from "config/index";
 var neo4j = require("neo4j-driver");
 export default {
   name: "AuthorArticleSearch",
-  components: { Visualization,Search },
+  components: { Visualization, Search },
   props: {
     condition: {
       type: Number,
-      default: 0,
-    },
+      default: 0
+    }
   },
   data() {
     return {
-      keyword: "",
-      switchval: false,
+      driver: null,
+      cypherkeyword: false,
+      graphtable: false,
+      records: [],
+      clearAll: false
     };
   },
   watch: {
     condition: {
       handler() {},
-      deep: true,
-    },
+      deep: true
+    }
   },
-  mounted() {},
+  mounted() {
+    this.driver = neo4j.driver(
+      setting.neo4jUrl,
+      neo4j.auth.basic(setting.neo4jUserName, setting.neo4jPassword)
+    );
+  },
   created() {},
 
   methods: {
     handleSelect(key, keyPath) {
       console.log(key, keyPath);
     },
-  },
+    handleClickNode(){
+
+    },
+    Submit(query){
+      console.log("Submit", query);
+      // let query = "MATCH (n:Author) RETURN n LIMIT 25";
+      if(this.cypherkeyword){
+        this.executeCypher(query);        
+      }else{
+        //TODO:关键词搜搜
+      }
+    },
+    CypherKeyword(data){
+      this.cypherkeyword = data;
+    },
+    GraphTeble(data){
+      this.graphtable = data;
+    },
+    /**
+     * 直接执行Cypher
+     */
+    executeCypher(query){
+      let me = this;
+      me.records = [];
+      this.clearAll = true;
+      let session = this.driver.session();
+      let driver = this.driver;
+
+      if (query == "") return;
+
+      session
+        .run(query, {})
+        .then(function(result) {
+          me.clearAll = false;
+          me.records = result.records;
+          console.log("neo4j 结果", result);
+          session.close();
+          me.closeLoading(false);
+        })
+        .catch(function(error) {
+          console.log(error);
+          driver.close();
+        });
+    },
+
+    closeLoading(status){
+      console.log('closeLoading', status);
+      this.$refs.Search.setLoading(status);
+    }
+
+  }
 };
 </script>
 
@@ -50,8 +112,14 @@ export default {
 }
 
 /* 可视化组件 */
-.show {
-  flex-grow: 25;
+.search {
+  /* flex-grow: 1; */
   width: 100%;
+  height: 10vh;
+}
+.show {
+  /* flex-grow: 250; */
+  width: 100%;
+  height: 90vh;
 }
 </style>

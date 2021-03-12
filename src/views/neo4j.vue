@@ -53,7 +53,7 @@ export default {
         "4": "AuthorKeywordSearch", // 作者文章关键词搜索
         "5": "CoopratorArticleSearch", // 合作对象文章检索
         "6": "AuthorSimilarSearch", // 作者相似度查询
-        "7": "AuthorCentralitySearch", // 作者中心d度查询
+        "7": "AuthorCentralitySearch", // 作者中心度查询
         "8-1": "StructCommunitySearch", // 结构紧密社区搜索
         "8-2": "AttributeCommunitySearch" // 属性紧密社区搜索
       }
@@ -78,9 +78,10 @@ export default {
 </script>
 
 <style scoped >
-html, body {
-    height:100%;
-    margin:0;
+html,
+body {
+  height: 100%;
+  margin: 0;
 }
 .box {
   display: flex;
@@ -89,13 +90,12 @@ html, body {
   height: 100%;
   width: 100%;
 }
-.menu{
-   /* flex-grow:1; */
-   width: 15vw;
+.menu {
+  /* flex-grow:1; */
+  width: 15vw;
 }
 .el-menu-demo {
   height: 100%;
-  
 }
 .visual {
   display: flex;

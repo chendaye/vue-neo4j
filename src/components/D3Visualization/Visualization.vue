@@ -1,7 +1,8 @@
 <template>
   <div
     :style="[{'width': '100%'},
-    {'height': fullscreen ? '100vh' : (dim.frameBodyHeight - (dim.frameTitlebarHeight * 2)) + 'px'},
+    {'height': '75vh'},
+    {'padding-top': '10px'},
     {'display': extendStyle.display}]">
     <ExplorerComponent
       ref="ExplorerComponent"
