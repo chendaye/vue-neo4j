@@ -1,9 +1,21 @@
 <template>
   <div class="box">
     <div class="search">
-    <Search ref="Search" @Submit="Submit" @CypherKeyword="CypherKeyword" @GraphTeble="GraphTeble" />      
+      <Search
+        ref="Search"
+        @Submit="Submit"
+        @CypherKeyword="CypherKeyword"
+        @GraphTeble="GraphTeble"
+      />
     </div>
-    <div class="show">
+    <div class="show" v-if="graphtable">
+      <el-table :data="tableData" header-align="center" style="width: 100%">
+        <el-table-column align="center" prop="date" label="日期" width="180"></el-table-column>
+        <el-table-column prop="name" label="姓名" width="180"></el-table-column>
+        <el-table-column prop="address" label="地址"></el-table-column>
+      </el-table>
+    </div>
+    <div class="show" v-else>
       <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
     </div>
   </div>
@@ -29,7 +41,9 @@ export default {
       cypherkeyword: false,
       graphtable: false,
       records: [],
-      clearAll: false
+      clearAll: false,
+      tableData: [],
+      articles: []
     };
   },
   watch: {
@@ -50,28 +64,27 @@ export default {
     handleSelect(key, keyPath) {
       console.log(key, keyPath);
     },
-    handleClickNode(){
-
-    },
-    Submit(query){
+    handleClickNode() {},
+    Submit(query) {
       console.log("Submit", query);
-      // let query = "MATCH (n:Author) RETURN n LIMIT 25";
-      if(this.cypherkeyword){
-        this.executeCypher(query);        
-      }else{
-        //TODO:关键词搜搜
+      if (this.cypherkeyword) {
+        this.executeCypher(query);
+      } else {
+        //TODO:关键词搜索
+        this.executeKeywordCypher(query);
       }
     },
-    CypherKeyword(data){
+    CypherKeyword(data) {
       this.cypherkeyword = data;
     },
-    GraphTeble(data){
+    GraphTeble(data) {
       this.graphtable = data;
+      console.log(this.graphtable);
     },
     /**
      * 直接执行Cypher
      */
-    executeCypher(query){
+    executeCypher(query) {
       let me = this;
       me.records = [];
       this.clearAll = true;
@@ -84,7 +97,7 @@ export default {
         .then(function(result) {
           me.clearAll = false;
           me.records = result.records;
-          console.log("neo4j 结果", result);
+          console.log("neo4j 结果", result.records);
           session.close();
           me.closeLoading(false);
         })
@@ -93,12 +106,79 @@ export default {
           me.driver.close();
         });
     },
+   
+    /**
+     * 关键字查询,查询性能
+     */
+    executeKeywordCypher(keyword) {
+      let query = `match res=(u:Author {name:"${keyword}"})-[r:AuthorPaper]->() return r`;
+      // console.log('executeKeywordCypher', query);return;
+      let me = this;
+      me.records = [];
+      me.articles = [];
+      this.clearAll = true;
+      let session = this.driver.session();
+      if (query == "") return;
+      session
+        .run(query, {})
+        .then(function(result) {
+          me.clearAll = false;
+          result.records.forEach(item => {
+            item.forEach(record => {
+              me.articles.push(record.end.low);
+              // me.articles.push(record.identity.low);
+            });
+          });
+          //TODO:查询文章的ID
+          let articleIdStr = me.implode(me.articles, ',');
+          console.log('articleIdStr', articleIdStr)
+          return new Promise((resolve, reject) => {
+            if(articleIdStr.length > 0){
+              resolve(articleIdStr);
+            }else{
+              reject(new Error("文章ID查询失败！"))
+            }
+          });
+          session.close();
+        }).then((articleIdStr) => {
+          // articleIdStr = '3768185,3697993';
+          // let showTable = `match (p:Paper) where id(p) in [${articleIdStr}] return p`
+          let showTable = `match res=(u:Author {name:'${keyword}'})-[:AuthorPaper]-(p:Paper) where id(p) in [${articleIdStr}] return res`;
 
-    closeLoading(status){
-      console.log('closeLoading', status);
+          console.log('promise', showTable) // Mark F. Hornick
+
+          // let session2 = this.driver.session();
+          // session2.run(showTable, {}).then(data => {
+          //   console.log('77777777777', data)
+          //   me.records = data.records;
+          //   me.closeLoading(false);
+          // })
+          // session.close();
+        })
+        .catch(function(error) {
+          console.log("Cypher 执行失败！", error);
+          me.driver.close();
+        });
+    },
+
+    closeLoading(status) {
+      console.log("closeLoading", status);
       this.$refs.Search.setLoading(status);
+    },
+    /**
+     * 逗号分隔数组
+     */
+    implode(arr, tag) {
+      var str = "";
+      for (var i = 0; i < arr.length; i++) {
+        str += arr[i] + tag;
+      }
+      //去掉最后一个逗号(如果不需要去掉，就不用写)
+      if (str.length > 0) {
+        str = str.substr(0, str.length - 1);
+      }
+      return str;
     }
-
   }
 };
 </script>
