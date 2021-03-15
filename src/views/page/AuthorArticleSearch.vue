@@ -171,11 +171,10 @@ export default {
     implode(arr, tag) {
       var str = "";
       for (var i = 0; i < arr.length; i++) {
-        str += arr[i] + tag;
-      }
-      //去掉最后一个逗号(如果不需要去掉，就不用写)
-      if (str.length > 0) {
-        str = str.substr(0, str.length - 1);
+        str += arr[i];
+        if(i < arr.length-1){
+          str += tag;
+        }
       }
       return str;
     }
