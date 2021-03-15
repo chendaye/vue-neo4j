@@ -76,7 +76,6 @@ export default {
       me.records = [];
       this.clearAll = true;
       let session = this.driver.session();
-      let driver = this.driver;
 
       if (query == "") return;
 
@@ -90,8 +89,8 @@ export default {
           me.closeLoading(false);
         })
         .catch(function(error) {
-          console.log(error);
-          driver.close();
+          console.log("Cypher 执行失败！", error);
+          me.driver.close();
         });
     },
 
