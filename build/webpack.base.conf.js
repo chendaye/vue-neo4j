@@ -28,6 +28,7 @@ module.exports = {
       src: path.resolve(__dirname, '../src'),
       assets: path.resolve(__dirname, '../src/static'),
       components: path.resolve(__dirname, '../src/components'),
+      utils: path.resolve(__dirname, '../src/utils'),
       views: path.resolve(__dirname, '../src/views'),
       // third-party
       // vue-addon

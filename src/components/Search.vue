@@ -66,7 +66,7 @@ export default {
   methods: {
     Submit() {
       this.setLoading(true);
-      this.$emit("Submit", this.keyword)
+      this.$emit("Submit", this.keyword.trim())
     },
     setLoading(status){
       this.loading = status;

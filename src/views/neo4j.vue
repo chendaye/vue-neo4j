@@ -31,10 +31,26 @@
 </template>
 <script>
 import AuthorArticleSearch from "./page/AuthorArticleSearch";
+import AuthorCoopratorSearch from "./page/AuthorCoopratorSearch";
+import ArticleAuthorSearch from "./page/ArticleAuthorSearch";
+import AuthorKeywordSearch from "./page/AuthorKeywordSearch";
+import CoopratorArticleSearch from "./page/CoopratorArticleSearch";
+import AuthorSimilarSearch from "./page/AuthorSimilarSearch";
+import AuthorCentralitySearch from "./page/AuthorCentralitySearch";
+import StructCommunitySearch from "./page/StructCommunitySearch";
+import AttributeCommunitySearch from "./page/AttributeCommunitySearch";
 export default {
   name: "Neo4jSearch",
   components: {
-    AuthorArticleSearch
+    AuthorArticleSearch,
+    AuthorCoopratorSearch,
+    ArticleAuthorSearch,
+    AuthorKeywordSearch,
+    CoopratorArticleSearch,
+    AuthorSimilarSearch,
+    AuthorCentralitySearch,
+    StructCommunitySearch,
+    AttributeCommunitySearch,
   },
   props: {
     condition: {
@@ -93,6 +109,7 @@ body {
 .menu {
   /* flex-grow:1; */
   width: 15vw;
+  height: 100%;
 }
 .el-menu-demo {
   height: 100%;

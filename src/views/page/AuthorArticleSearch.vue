@@ -9,11 +9,30 @@
       />
     </div>
     <div class="show" v-if="graphtable">
-      <el-table :data="tableData" header-align="center" style="width: 100%">
-        <el-table-column align="center" prop="date" label="日期" width="180"></el-table-column>
-        <el-table-column prop="name" label="姓名" width="180"></el-table-column>
-        <el-table-column prop="address" label="地址"></el-table-column>
-      </el-table>
+      <div class="page_table">
+        <el-table :data="tableData" header-align="center" style="width: 100%">
+          <el-table-column align="center" prop="paperId" label="paperId"></el-table-column>
+          <el-table-column align="center" prop="title" label="title" min-width="300"></el-table-column>
+          <el-table-column align="center" prop="journal" label="journal" min-width="150"></el-table-column>
+          <el-table-column align="center" prop="mdate" label="mdate"></el-table-column>
+          <el-table-column align="center" prop="year" label="year"></el-table-column>
+          <el-table-column align="center" prop="key" label="key"></el-table-column>
+          <el-table-column align="center" prop="publtype" label="publtype"></el-table-column>
+          <el-table-column align="center" prop="rating" label="rating"></el-table-column>
+          <el-table-column align="center" prop="reviewid" label="reviewid"></el-table-column>
+        </el-table>
+      </div>
+
+      <div class="page_wrap">
+        <el-pagination
+          background
+          @current-change="handleCurrentChange"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          layout="total, prev, pager, next"
+          :total="total"
+        ></el-pagination>
+      </div>
     </div>
     <div class="show" v-else>
       <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
@@ -24,6 +43,7 @@
 import { Visualization } from "components/D3Visualization";
 import Search from "components/Search";
 import { setting } from "config/index";
+import { copyArray } from "utils/index";
 // https://www.npmjs.com/package/neo4j-driver
 var neo4j = require("neo4j-driver");
 export default {
@@ -43,7 +63,11 @@ export default {
       records: [],
       clearAll: false,
       tableData: [],
-      articles: []
+      articles: [],
+      tableData: [],
+      currentPage: 1,
+      pageSize: 10,
+      total:0,
     };
   },
   watch: {
@@ -89,9 +113,7 @@ export default {
       me.records = [];
       this.clearAll = true;
       let session = this.driver.session();
-
       if (query == "") return;
-
       session
         .run(query, {})
         .then(function(result) {
@@ -106,12 +128,12 @@ export default {
           me.driver.close();
         });
     },
-   
+
     /**
      * 关键字查询,查询性能
      */
     executeKeywordCypher(keyword) {
-      let query = `match res=(u:Author {name:"${keyword}"})-[r:AuthorPaper]->() return r`;
+      let query = `match res=(u:Author {name:"${keyword}"})-[r:AuthorPaper]->(p:Paper)  return res order by p.mdate desc`;
       // console.log('executeKeywordCypher', query);return;
       let me = this;
       me.records = [];
@@ -123,37 +145,17 @@ export default {
         .run(query, {})
         .then(function(result) {
           me.clearAll = false;
+          me.records = result.records;
           result.records.forEach(item => {
             item.forEach(record => {
-              me.articles.push(record.end.low);
-              // me.articles.push(record.identity.low);
+              let articleNode = record.end.properties;
+              me.articles.push(articleNode);
             });
           });
-          //TODO:查询文章的ID
-          let articleIdStr = me.implode(me.articles, ',');
-          console.log('articleIdStr', articleIdStr)
-          return new Promise((resolve, reject) => {
-            if(articleIdStr.length > 0){
-              resolve(articleIdStr);
-            }else{
-              reject(new Error("文章ID查询失败！"))
-            }
-          });
+          me.total = me.articles.length;
+          me.tableData = copyArray(me.articles, 0, 10);
+          me.closeLoading(false);
           session.close();
-        }).then((articleIdStr) => {
-          // articleIdStr = '3768185,3697993';
-          // let showTable = `match (p:Paper) where id(p) in [${articleIdStr}] return p`
-          let showTable = `match res=(u:Author {name:'${keyword}'})-[:AuthorPaper]-(p:Paper) where id(p) in [${articleIdStr}] return res`;
-
-          console.log('promise', showTable) // Mark F. Hornick
-
-          // let session2 = this.driver.session();
-          // session2.run(showTable, {}).then(data => {
-          //   console.log('77777777777', data)
-          //   me.records = data.records;
-          //   me.closeLoading(false);
-          // })
-          // session.close();
         })
         .catch(function(error) {
           console.log("Cypher 执行失败！", error);
@@ -165,19 +167,13 @@ export default {
       console.log("closeLoading", status);
       this.$refs.Search.setLoading(status);
     },
-    /**
-     * 逗号分隔数组
-     */
-    implode(arr, tag) {
-      var str = "";
-      for (var i = 0; i < arr.length; i++) {
-        str += arr[i];
-        if(i < arr.length-1){
-          str += tag;
-        }
-      }
-      return str;
-    }
+    handleCurrentChange(val) {
+      this.tableData = [];
+      let start = (val - 1) * this.pageSize;
+      let end = start + this.pageSize >= this.articles.length ? this.articles.length : start + this.pageSize;
+      this.tableData = [...copyArray(this.articles, start, end)];
+      console.log([start, end, this.tableData]);
+    },
   }
 };
 </script>
@@ -191,13 +187,17 @@ export default {
 
 /* 可视化组件 */
 .search {
-  /* flex-grow: 1; */
+  flex-grow: 10;
   width: 100%;
-  height: 10vh;
+  margin-bottom: 5px;
+  margin-top: 5px;
+  height: 6vh;
 }
 .show {
-  /* flex-grow: 250; */
+  display: flex;
+  flex-direction: column;
+  flex-grow: 250;
   width: 100%;
-  height: 90vh;
+  /* height: 90vh; */
 }
 </style>
