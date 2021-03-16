@@ -3,6 +3,7 @@
     <div class="search">
       <Search
         ref="Search"
+        :showQuery="false"
         @Submit="Submit"
         @CypherKeyword="CypherKeyword"
         @GraphTeble="GraphTeble"

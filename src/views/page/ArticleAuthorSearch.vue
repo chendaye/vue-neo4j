@@ -3,23 +3,100 @@
     <div class="search">
       <Search
         ref="Search"
+        :queryAuthor="true"
+        :showQuery="false"
         @Submit="Submit"
         @CypherKeyword="CypherKeyword"
         @GraphTeble="GraphTeble"
+        @SearchAuthorArticle="SearchAuthorArticle"
       />
     </div>
     <div class="show" v-if="graphtable">
       <div class="page_table">
-        <el-table :data="tableData" header-align="center" style="width: 100%">
-          <el-table-column align="center" prop="paperId" label="paperId"></el-table-column>
-          <el-table-column align="center" prop="title" label="title" min-width="300"></el-table-column>
-          <el-table-column align="center" prop="journal" label="journal" min-width="150"></el-table-column>
-          <el-table-column align="center" prop="mdate" label="mdate"></el-table-column>
-          <el-table-column align="center" prop="year" label="year"></el-table-column>
-          <el-table-column align="center" prop="key" label="key"></el-table-column>
-          <el-table-column align="center" prop="publtype" label="publtype"></el-table-column>
-          <el-table-column align="center" prop="rating" label="rating"></el-table-column>
-          <el-table-column align="center" prop="reviewid" label="reviewid"></el-table-column>
+        <el-table
+          :data="tableData"
+          header-align="center"
+          style="width: 100%"
+          v-if="searchAuthorArticle"
+        >
+          <el-table-column
+            align="center"
+            prop="paperId"
+            label="paperId"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="title"
+            label="title"
+            min-width="300"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="journal"
+            label="journal"
+            min-width="150"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="mdate"
+            label="mdate"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="year"
+            label="year"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="key"
+            label="key"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="publtype"
+            label="publtype"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="rating"
+            label="rating"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="reviewid"
+            label="reviewid"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="score"
+            label="score"
+          ></el-table-column>
+        </el-table>
+        <!-- AUthor -->
+        <el-table
+          :data="tableData"
+          header-align="center"
+          style="width: 100%"
+          v-else
+        >
+          <el-table-column
+            align="center"
+            prop="authorId"
+            label="authorId"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="name"
+            label="name"
+            min-width="300"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="score"
+            label="score"
+            min-width="150"
+          ></el-table-column>
+        
         </el-table>
       </div>
 
@@ -35,7 +112,11 @@
       </div>
     </div>
     <div class="show" v-else>
-      <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
+      <Visualization
+        @clickNode="handleClickNode"
+        :records="records"
+        :clearAll="clearAll"
+      ></Visualization>
     </div>
   </div>
 </template>
@@ -52,29 +133,30 @@ export default {
   props: {
     condition: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   data() {
     return {
       driver: null,
       cypherkeyword: false,
       graphtable: false,
+      searchAuthorArticle: false,
       records: [],
       clearAll: false,
       tableData: [],
-      articles: [],
+      listData: [],
       tableData: [],
       currentPage: 1,
       pageSize: 10,
-      total:0,
+      total: 0,
     };
   },
   watch: {
     condition: {
       handler() {},
-      deep: true
-    }
+      deep: true,
+    },
   },
   mounted() {
     this.driver = neo4j.driver(
@@ -105,6 +187,9 @@ export default {
       this.graphtable = data;
       console.log(this.graphtable);
     },
+    SearchAuthorArticle(data) {
+      this.searchAuthorArticle = data;
+    },
     /**
      * 直接执行Cypher
      */
@@ -116,14 +201,14 @@ export default {
       if (query == "") return;
       session
         .run(query, {})
-        .then(function(result) {
+        .then(function (result) {
           me.clearAll = false;
           me.records = result.records;
           console.log("neo4j 结果", result.records);
           session.close();
           me.closeLoading(false);
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -133,38 +218,34 @@ export default {
      * 关键字查询,查询性能
      */
     executeKeywordCypher(keyword) {
-      let query = `match res=(u:Author {name:"${keyword}"})-[r:AuthorPaper]->(p:Paper)  return res order by p.mdate desc`;
-      // console.log('executeKeywordCypher', query);return;
+      let label = this.searchAuthorArticle ? "PaperTitle" : "AuthorName";
+      let query = `CALL db.index.fulltext.queryNodes("${label}", "${keyword}") YIELD node, score RETURN node,score limit 100`;
+      // console.log('executeKeywordCypher', [this.searchAuthorArticle,query]);return;
       let me = this;
       me.records = [];
-      me.articles = [];
+      me.listData = [];
       this.clearAll = true;
       let session = this.driver.session();
       if (query == "") return;
       session
         .run(query, {})
-        .then(function(result) {
+        .then(function (result) {
           me.clearAll = false;
           me.records = result.records;
-          result.records.forEach(item => {
-            item.forEach(record => {
-              let articleNode = record.end.properties;
-              me.articles.push(articleNode);
-            });
+          result.records.forEach((item) => {
+            let listNode = item._fields[0].properties;
+            let score = item._fields[1];
+            listNode.score = score;
+            console.log(listNode);
+            me.listData.push(listNode);
           });
-          me.total = me.articles.length;
-          me.tableData = copyArray(me.articles, 0, 10);
-          // return new Promise((resolve, reject) => {
-          //   if (articleIdStr.length > 0) {
-          //     resolve(articleIdStr);
-          //   } else {
-          //     reject(new Error("文章ID查询失败！"));
-          //   }
-          // });
+          me.total = me.listData.length;
+          me.tableData = copyArray(me.listData, 0, 10);
+          console.log("data", me.tableData);
           me.closeLoading(false);
           session.close();
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -177,11 +258,14 @@ export default {
     handleCurrentChange(val) {
       this.tableData = [];
       let start = (val - 1) * this.pageSize;
-      let end = start + this.pageSize >= this.articles.length ? this.articles.length : start + this.pageSize;
-      this.tableData = [...copyArray(this.articles, start, end)];
+      let end =
+        start + this.pageSize >= this.listData.length
+          ? this.listData.length
+          : start + this.pageSize;
+      this.tableData = [...copyArray(this.listData, start, end)];
       console.log([start, end, this.tableData]);
     },
-  }
+  },
 };
 </script>
 

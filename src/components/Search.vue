@@ -4,20 +4,12 @@
       <el-input v-model="keyword" placeholder="请输入查询内容"></el-input>
     </div>
     <div class="search-submit">
-      <el-button type="success" round  @click="Submit" :loading="loading">搜索</el-button>
-    </div>
-    <div class="search-switch">
-      <el-switch
-        style="display: block"
-        v-model="switchval"
-        active-color="#13ce66"
-        inactive-color="#ff4949"
-        active-text="Cypher"
-        inactive-text="关键词"
+      <el-button type="success" round @click="Submit" :loading="loading"
+        >搜索</el-button
       >
-      </el-switch>
     </div>
-    <div class="search-switch">
+
+    <div class="search-switch" v-show="showGraph">
       <el-switch
         style="display: block"
         v-model="cypherval"
@@ -28,6 +20,29 @@
       >
       </el-switch>
     </div>
+
+    <div class="search-switch" v-show="queryAuthor">
+      <el-switch
+        style="display: block"
+        v-model="authorArticle"
+        active-color="#13ce66"
+        inactive-color="#ff4949"
+        active-text="文章"
+        inactive-text="作者"
+      >
+      </el-switch>
+    </div>
+    <div class="search-switch" v-show="showQuery">
+      <el-switch
+        style="display: block"
+        v-model="switchval"
+        active-color="#13ce66"
+        inactive-color="#ff4949"
+        active-text="Cypher"
+        inactive-text="关键词"
+      >
+      </el-switch>
+    </div>
   </div>
 </template>
 <script>
@@ -35,9 +50,17 @@ export default {
   name: "Search",
   components: {},
   props: {
-    condition: {
-      type: Number,
-      default: 0,
+    showQuery: {
+      type: Boolean,
+      default: true,
+    },
+    showGraph: {
+      type: Boolean,
+      default: true,
+    },
+    queryAuthor: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -45,6 +68,7 @@ export default {
       keyword: "",
       switchval: false,
       cypherval: false,
+      authorArticle: false,
       loading: false,
     };
   },
@@ -53,12 +77,15 @@ export default {
       handler() {},
       deep: true,
     },
-    switchval(val){
-      this.$emit("CypherKeyword", val)
+    switchval(val) {
+      this.$emit("CypherKeyword", val);
     },
-    cypherval(val){
-      this.$emit("GraphTeble", val)
-    }
+    cypherval(val) {
+      this.$emit("GraphTeble", val);
+    },
+    authorArticle(val) {
+      this.$emit("SearchAuthorArticle", val);
+    },
   },
   mounted() {},
   created() {},
@@ -66,11 +93,11 @@ export default {
   methods: {
     Submit() {
       this.setLoading(true);
-      this.$emit("Submit", this.keyword.trim())
+      this.$emit("Submit", this.keyword.trim());
     },
-    setLoading(status){
+    setLoading(status) {
       this.loading = status;
-    }
+    },
   },
 };
 </script>
