@@ -189,6 +189,7 @@ export default {
     },
     SearchAuthorArticle(data) {
       this.searchAuthorArticle = data;
+      this.tableData = [];
     },
     /**
      * 直接执行Cypher
