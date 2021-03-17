@@ -10,16 +10,29 @@
     </div>
     <div class="show" v-if="graphtable">
       <div class="page_table">
-        <el-table :data="tableData" header-align="center" style="width: 100%" height="89vh">
-          <el-table-column align="center" prop="paperId" label="paperId"></el-table-column>
-          <el-table-column align="center" prop="title" label="title" min-width="300"></el-table-column>
-          <el-table-column align="center" prop="journal" label="journal" min-width="150"></el-table-column>
-          <el-table-column align="center" prop="mdate" label="mdate"></el-table-column>
-          <el-table-column align="center" prop="year" label="year"></el-table-column>
-          <el-table-column align="center" prop="key" label="key"></el-table-column>
-          <el-table-column align="center" prop="publtype" label="publtype"></el-table-column>
-          <el-table-column align="center" prop="rating" label="rating"></el-table-column>
-          <el-table-column align="center" prop="reviewid" label="reviewid"></el-table-column>
+        <el-table
+          :data="tableData"
+          header-align="center"
+          style="width: 100%"
+          height="89vh"
+        >
+          <el-table-column
+            align="center"
+            prop="id"
+            label="authorId"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="name"
+            label="name"
+            min-width="300"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="score"
+            label="score"
+            min-width="150"
+          ></el-table-column>
         </el-table>
       </div>
 
@@ -35,7 +48,11 @@
       </div>
     </div>
     <div class="show" v-else>
-      <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
+      <Visualization
+        @clickNode="handleClickNode"
+        :records="records"
+        :clearAll="clearAll"
+      ></Visualization>
     </div>
   </div>
 </template>
@@ -43,7 +60,7 @@
 import { Visualization } from "components/D3Visualization";
 import Search from "components/Search";
 import { setting } from "config/index";
-import { copyArray } from "utils/index";
+import { copyArray, implode } from "utils/index";
 // https://www.npmjs.com/package/neo4j-driver
 var neo4j = require("neo4j-driver");
 export default {
@@ -52,8 +69,8 @@ export default {
   props: {
     condition: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   data() {
     return {
@@ -63,18 +80,20 @@ export default {
       records: [],
       clearAll: false,
       tableData: [],
-      articles: [],
+      similars: [],
+      authorIds: [],
+      authors: [],
       tableData: [],
       currentPage: 1,
       pageSize: 10,
-      total: 0
+      total: 0,
     };
   },
   watch: {
     condition: {
       handler() {},
-      deep: true
-    }
+      deep: true,
+    },
   },
   mounted() {
     this.driver = neo4j.driver(
@@ -116,14 +135,14 @@ export default {
       if (query == "") return;
       session
         .run(query, {})
-        .then(function(result) {
+        .then(function (result) {
           me.clearAll = false;
           me.records = result.records;
           console.log("neo4j 结果", result.records);
           session.close();
           me.closeLoading(false);
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -133,38 +152,65 @@ export default {
      * 关键字查询,查询性能
      */
     executeKeywordCypher(keyword) {
-      let query = `match res=(u:Author {name:"${keyword}"})-[r:AuthorPaper]->(p:Paper)  return res order by p.mdate desc`;
+      let query = `match (u:Author {name:"${keyword}"})  CALL top.chendaye666.simrank.search(u, 'AL-naive') YIELD nid,oid,value RETURN nid,oid,value`;
       // console.log('executeKeywordCypher', query);return;
       let me = this;
       me.records = [];
-      me.articles = [];
+      me.similars = [];
       this.clearAll = true;
       let session = this.driver.session();
       if (query == "") return;
       session
         .run(query, {})
-        .then(function(result) {
+        .then(function (result) {
           me.clearAll = false;
           me.records = result.records;
-          result.records.forEach(item => {
-            item.forEach(record => {
-              let articleNode = record.end.properties;
-              me.articles.push(articleNode);
-            });
+          me.records.forEach((res) => {
+            me.similars.push(res._fields);
+            me.authorIds.push(parseInt(res._fields[1]));
           });
-          me.total = me.articles.length;
-          me.tableData = copyArray(me.articles, 0, 10);
-          // return new Promise((resolve, reject) => {
-          //   if (articleIdStr.length > 0) {
-          //     resolve(articleIdStr);
-          //   } else {
-          //     reject(new Error("文章ID查询失败！"));
-          //   }
-          // });
-          me.closeLoading(false);
+          return new Promise((resolve, reject) => {
+            if (me.similars.length > 0) {
+              resolve([me.similars, me.authorIds]);
+            } else {
+              reject(new Error("文章ID查询失败！"));
+            }
+          });
           session.close();
         })
-        .catch(function(error) {
+        .then((res) => {
+          let session2 = this.driver.session();
+          let queryStr = implode(res[1], ",");
+          let me = this;
+          let query = `match (u:Author) where id(u) in [${queryStr}] return u`;
+          session2
+            .run(query, {})
+            .then((result) => {
+              let nameMap = [];
+              me.records = result.records;
+              result.records.forEach((item) => {
+                item.forEach((record) => {
+                  console.log(record);
+                  nameMap.push({id:record.identity.low, name:record.properties.name});
+                  me.similars.forEach(f => {
+                    if(f[1] == record.identity.low){
+                      me.authors.push({id:f[0], name:record.properties.name, score: f[2]});
+                    }
+                  });
+                });
+              });
+              me.total = me.similars.length;
+              me.tableData = copyArray(me.authors, 0, 10);
+              console.log("similar", me.authors);
+              me.closeLoading(false);
+              session2.close();
+            })
+            .catch(function (error) {
+              console.log("session2 Cypher 执行失败！", error);
+              me.driver.close();
+            });
+        })
+        .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -178,13 +224,13 @@ export default {
       this.tableData = [];
       let start = (val - 1) * this.pageSize;
       let end =
-        start + this.pageSize >= this.articles.length
-          ? this.articles.length
+        start + this.pageSize >= this.authors.length
+          ? this.authors.length
           : start + this.pageSize;
-      this.tableData = [...copyArray(this.articles, start, end)];
+      this.tableData = [...copyArray(this.authors, start, end)];
       console.log([start, end, this.tableData]);
-    }
-  }
+    },
+  },
 };
 </script>
 
