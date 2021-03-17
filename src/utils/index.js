@@ -18,3 +18,27 @@ export const implode = (arr, tag) => {
   }
   return str;
 }
+export const sortArray = (arr, key, order) => {
+  if (order == "asc") {
+    arr.sort((a, b) => a[key] - b[key]);
+  } else if (order == "desc") {
+    arr.sort((a, b) => b[key] - a[key]);
+  }
+  return arr;
+}
+
+export const parseWords = (data) => {
+  let word = data.split("@");
+  let arr = [];
+  for (let i = 0; i < word.length; i++) {
+    let keyword = word[i].split(":");
+    if (keyword.length == 3) {
+      arr.push({
+        id: parseInt(keyword[0]),
+        word: keyword[1],
+        frequency: parseInt(keyword[2])
+      });
+    }
+  }
+  return arr;
+}

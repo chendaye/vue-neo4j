@@ -17,86 +17,25 @@
           :data="tableData"
           header-align="center"
           style="width: 100%"
+          height="89vh"
           v-if="searchAuthorArticle"
         >
-          <el-table-column
-            align="center"
-            prop="paperId"
-            label="paperId"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="title"
-            label="title"
-            min-width="300"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="journal"
-            label="journal"
-            min-width="150"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="mdate"
-            label="mdate"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="year"
-            label="year"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="key"
-            label="key"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="publtype"
-            label="publtype"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="rating"
-            label="rating"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="reviewid"
-            label="reviewid"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="score"
-            label="score"
-          ></el-table-column>
+          <el-table-column align="center" prop="paperId" label="paperId"></el-table-column>
+          <el-table-column align="center" prop="title" label="title" min-width="300"></el-table-column>
+          <el-table-column align="center" prop="journal" label="journal" min-width="150"></el-table-column>
+          <el-table-column align="center" prop="mdate" label="mdate"></el-table-column>
+          <el-table-column align="center" prop="year" label="year"></el-table-column>
+          <el-table-column align="center" prop="key" label="key"></el-table-column>
+          <el-table-column align="center" prop="publtype" label="publtype"></el-table-column>
+          <el-table-column align="center" prop="rating" label="rating"></el-table-column>
+          <el-table-column align="center" prop="reviewid" label="reviewid"></el-table-column>
+          <el-table-column align="center" prop="score" label="score"></el-table-column>
         </el-table>
         <!-- AUthor -->
-        <el-table
-          :data="tableData"
-          header-align="center"
-          style="width: 100%"
-          v-else
-        >
-          <el-table-column
-            align="center"
-            prop="authorId"
-            label="authorId"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="name"
-            label="name"
-            min-width="300"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="score"
-            label="score"
-            min-width="150"
-          ></el-table-column>
-        
+        <el-table :data="tableData" header-align="center" style="width: 100%" height="89vh" v-else>
+          <el-table-column align="center" prop="authorId" label="authorId"></el-table-column>
+          <el-table-column align="center" prop="name" label="name" min-width="300"></el-table-column>
+          <el-table-column align="center" prop="score" label="score" min-width="150"></el-table-column>
         </el-table>
       </div>
 
@@ -112,11 +51,7 @@
       </div>
     </div>
     <div class="show" v-else>
-      <Visualization
-        @clickNode="handleClickNode"
-        :records="records"
-        :clearAll="clearAll"
-      ></Visualization>
+      <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
     </div>
   </div>
 </template>
@@ -133,8 +68,8 @@ export default {
   props: {
     condition: {
       type: Number,
-      default: 0,
-    },
+      default: 0
+    }
   },
   data() {
     return {
@@ -149,14 +84,14 @@ export default {
       tableData: [],
       currentPage: 1,
       pageSize: 10,
-      total: 0,
+      total: 0
     };
   },
   watch: {
     condition: {
       handler() {},
-      deep: true,
-    },
+      deep: true
+    }
   },
   mounted() {
     this.driver = neo4j.driver(
@@ -202,14 +137,14 @@ export default {
       if (query == "") return;
       session
         .run(query, {})
-        .then(function (result) {
+        .then(function(result) {
           me.clearAll = false;
           me.records = result.records;
           console.log("neo4j 结果", result.records);
           session.close();
           me.closeLoading(false);
         })
-        .catch(function (error) {
+        .catch(function(error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -230,10 +165,10 @@ export default {
       if (query == "") return;
       session
         .run(query, {})
-        .then(function (result) {
+        .then(function(result) {
           me.clearAll = false;
           me.records = result.records;
-          result.records.forEach((item) => {
+          result.records.forEach(item => {
             let listNode = item._fields[0].properties;
             let score = item._fields[1];
             listNode.score = score;
@@ -246,7 +181,7 @@ export default {
           me.closeLoading(false);
           session.close();
         })
-        .catch(function (error) {
+        .catch(function(error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -265,8 +200,8 @@ export default {
           : start + this.pageSize;
       this.tableData = [...copyArray(this.listData, start, end)];
       console.log([start, end, this.tableData]);
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -279,7 +214,7 @@ export default {
 
 /* 可视化组件 */
 .search {
-  flex-grow: 10;
+  flex-grow: 1;
   width: 100%;
   margin-bottom: 5px;
   margin-top: 5px;
@@ -288,8 +223,9 @@ export default {
 .show {
   display: flex;
   flex-direction: column;
-  flex-grow: 250;
+  flex-grow: 25;
   width: 100%;
-  /* height: 90vh; */
+  /* overflow: auto; */
+  /* height: 89vh; */
 }
 </style>

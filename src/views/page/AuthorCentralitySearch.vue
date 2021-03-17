@@ -10,7 +10,7 @@
     </div>
     <div class="show" v-if="graphtable">
       <div class="page_table">
-        <el-table :data="tableData" header-align="center" style="width: 100%">
+        <el-table :data="tableData" header-align="center" style="width: 100%" height="89vh">
           <el-table-column align="center" prop="paperId" label="paperId"></el-table-column>
           <el-table-column align="center" prop="title" label="title" min-width="300"></el-table-column>
           <el-table-column align="center" prop="journal" label="journal" min-width="150"></el-table-column>
@@ -67,7 +67,7 @@ export default {
       tableData: [],
       currentPage: 1,
       pageSize: 10,
-      total:0,
+      total: 0
     };
   },
   watch: {
@@ -177,10 +177,13 @@ export default {
     handleCurrentChange(val) {
       this.tableData = [];
       let start = (val - 1) * this.pageSize;
-      let end = start + this.pageSize >= this.articles.length ? this.articles.length : start + this.pageSize;
+      let end =
+        start + this.pageSize >= this.articles.length
+          ? this.articles.length
+          : start + this.pageSize;
       this.tableData = [...copyArray(this.articles, start, end)];
       console.log([start, end, this.tableData]);
-    },
+    }
   }
 };
 </script>
@@ -194,7 +197,7 @@ export default {
 
 /* 可视化组件 */
 .search {
-  flex-grow: 10;
+  flex-grow: 1;
   width: 100%;
   margin-bottom: 5px;
   margin-top: 5px;
@@ -203,8 +206,9 @@ export default {
 .show {
   display: flex;
   flex-direction: column;
-  flex-grow: 250;
+  flex-grow: 25;
   width: 100%;
-  /* height: 90vh; */
+  /* overflow: auto; */
+  /* height: 89vh; */
 }
 </style>

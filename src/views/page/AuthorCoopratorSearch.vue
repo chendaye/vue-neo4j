@@ -10,11 +10,11 @@
     </div>
     <div class="show" v-if="graphtable">
       <div class="page_table">
-        <el-table :data="tableData" header-align="center" style="width: 100%">
+        <el-table :data="tableData" header-align="center" style="width: 100%" height="89vh">
           <el-table-column align="center" prop="authorId" label="authorId"></el-table-column>
           <el-table-column align="center" prop="name" label="name"></el-table-column>
           <!-- <el-table-column align="center" prop="articles" label="articles"  min-width="300"></el-table-column>
-          <el-table-column align="center" prop="words" label="words"  min-width="300"></el-table-column> -->
+          <el-table-column align="center" prop="words" label="words"  min-width="300"></el-table-column>-->
         </el-table>
       </div>
 
@@ -62,7 +62,7 @@ export default {
       tableData: [],
       currentPage: 1,
       pageSize: 10,
-      total:0,
+      total: 0
     };
   },
   watch: {
@@ -144,7 +144,7 @@ export default {
           result.records.forEach(item => {
             item.forEach(record => {
               let articleNode = record.end.properties;
-              console.log(articleNode)
+              console.log(articleNode);
               me.articles.push(articleNode);
             });
           });
@@ -166,10 +166,13 @@ export default {
     handleCurrentChange(val) {
       this.tableData = [];
       let start = (val - 1) * this.pageSize;
-      let end = start + this.pageSize >= this.articles.length ? this.articles.length : start + this.pageSize;
+      let end =
+        start + this.pageSize >= this.articles.length
+          ? this.articles.length
+          : start + this.pageSize;
       this.tableData = [...copyArray(this.articles, start, end)];
       console.log([start, end, this.tableData]);
-    },
+    }
   }
 };
 </script>
@@ -194,20 +197,19 @@ export default {
   flex-direction: column;
   flex-grow: 25;
   width: 100%;
-  overflow:auto;
+  /* overflow:auto; */
   /* height: 100vh; */
   /* max-height: 100vh; */
-
 }
 
-.show .page_table{
+.show .page_table {
   /* flex-grow: 25; */
 }
-.show .page_wrap{
+.show .page_wrap {
   /* flex-grow: 2; */
 }
-.show .page_table .el-table{
-   /* height: 100vh; */
+.show .page_table .el-table {
+  /* height: 100vh; */
   /* max-height: 94vh; */
 }
 </style>

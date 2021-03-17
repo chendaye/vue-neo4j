@@ -3,6 +3,7 @@
     <div class="search">
       <Search
         ref="Search"
+        :showQuery="false"
         @Submit="Submit"
         @CypherKeyword="CypherKeyword"
         @GraphTeble="GraphTeble"
@@ -10,16 +11,10 @@
     </div>
     <div class="show" v-if="graphtable">
       <div class="page_table">
-        <el-table :data="tableData" header-align="center" style="width: 100%">
-          <el-table-column align="center" prop="paperId" label="paperId"></el-table-column>
-          <el-table-column align="center" prop="title" label="title" min-width="300"></el-table-column>
-          <el-table-column align="center" prop="journal" label="journal" min-width="150"></el-table-column>
-          <el-table-column align="center" prop="mdate" label="mdate"></el-table-column>
-          <el-table-column align="center" prop="year" label="year"></el-table-column>
-          <el-table-column align="center" prop="key" label="key"></el-table-column>
-          <el-table-column align="center" prop="publtype" label="publtype"></el-table-column>
-          <el-table-column align="center" prop="rating" label="rating"></el-table-column>
-          <el-table-column align="center" prop="reviewid" label="reviewid"></el-table-column>
+        <el-table :data="tableData" header-align="center" style="width: 100%" height="89vh">
+          <el-table-column align="center" prop="id" label="id"></el-table-column>
+          <el-table-column align="center" prop="word" label="word" min-width="300"></el-table-column>
+          <el-table-column align="center" prop="frequency" label="frequency" min-width="150"></el-table-column>
         </el-table>
       </div>
 
@@ -43,7 +38,7 @@
 import { Visualization } from "components/D3Visualization";
 import Search from "components/Search";
 import { setting } from "config/index";
-import { copyArray } from "utils/index";
+import { copyArray, sortArray, parseWords } from "utils/index";
 // https://www.npmjs.com/package/neo4j-driver
 var neo4j = require("neo4j-driver");
 export default {
@@ -63,11 +58,11 @@ export default {
       records: [],
       clearAll: false,
       tableData: [],
-      articles: [],
+      articleKeys: [],
       tableData: [],
       currentPage: 1,
       pageSize: 10,
-      total:0,
+      total: 0
     };
   },
   watch: {
@@ -133,11 +128,11 @@ export default {
      * 关键字查询,查询性能
      */
     executeKeywordCypher(keyword) {
-      let query = `match res=(u:Author {name:"${keyword}"})-[r:AuthorPaper]->(p:Paper)  return res order by p.mdate desc`;
+      let query = `match (u:Author {name:"${keyword}"})  return u`;
       // console.log('executeKeywordCypher', query);return;
       let me = this;
       me.records = [];
-      me.articles = [];
+      me.articleKeys = [];
       this.clearAll = true;
       let session = this.driver.session();
       if (query == "") return;
@@ -148,19 +143,15 @@ export default {
           me.records = result.records;
           result.records.forEach(item => {
             item.forEach(record => {
-              let articleNode = record.end.properties;
-              me.articles.push(articleNode);
+              let authorNode = record.properties;
+              me.articleKeys = me.articleKeys.concat(
+                parseWords(authorNode.words)
+              );
             });
           });
-          me.total = me.articles.length;
-          me.tableData = copyArray(me.articles, 0, 10);
-          // return new Promise((resolve, reject) => {
-          //   if (articleIdStr.length > 0) {
-          //     resolve(articleIdStr);
-          //   } else {
-          //     reject(new Error("文章ID查询失败！"));
-          //   }
-          // });
+          me.articleKeys = sortArray(me.articleKeys, "frequency", "desc");
+          me.total = me.articleKeys.length;
+          me.tableData = copyArray(me.articleKeys, 0, 10);
           me.closeLoading(false);
           session.close();
         })
@@ -177,10 +168,13 @@ export default {
     handleCurrentChange(val) {
       this.tableData = [];
       let start = (val - 1) * this.pageSize;
-      let end = start + this.pageSize >= this.articles.length ? this.articles.length : start + this.pageSize;
-      this.tableData = [...copyArray(this.articles, start, end)];
+      let end =
+        start + this.pageSize >= this.articleKeys.length
+          ? this.articleKeys.length
+          : start + this.pageSize;
+      this.tableData = [...copyArray(this.articleKeys, start, end)];
       console.log([start, end, this.tableData]);
-    },
+    }
   }
 };
 </script>
@@ -194,7 +188,7 @@ export default {
 
 /* 可视化组件 */
 .search {
-  flex-grow: 10;
+  flex-grow: 1;
   width: 100%;
   margin-bottom: 5px;
   margin-top: 5px;
@@ -203,8 +197,9 @@ export default {
 .show {
   display: flex;
   flex-direction: column;
-  flex-grow: 250;
+  flex-grow: 25;
   width: 100%;
-  /* height: 90vh; */
+  /* overflow: auto; */
+  /* height: 89vh; */
 }
 </style>
