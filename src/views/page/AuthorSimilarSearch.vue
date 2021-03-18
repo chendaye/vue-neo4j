@@ -10,29 +10,10 @@
     </div>
     <div class="show" v-if="graphtable">
       <div class="page_table">
-        <el-table
-          :data="tableData"
-          header-align="center"
-          style="width: 100%"
-          height="89vh"
-        >
-          <el-table-column
-            align="center"
-            prop="id"
-            label="authorId"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="name"
-            label="name"
-            min-width="300"
-          ></el-table-column>
-          <el-table-column
-            align="center"
-            prop="score"
-            label="score"
-            min-width="150"
-          ></el-table-column>
+        <el-table :data="tableData" header-align="center" style="width: 100%" height="89vh">
+          <el-table-column align="center" prop="id" label="authorId"></el-table-column>
+          <el-table-column align="center" prop="name" label="name" min-width="300"></el-table-column>
+          <el-table-column align="center" prop="score" label="score" min-width="150"></el-table-column>
         </el-table>
       </div>
 
@@ -48,11 +29,7 @@
       </div>
     </div>
     <div class="show" v-else>
-      <Visualization
-        @clickNode="handleClickNode"
-        :records="records"
-        :clearAll="clearAll"
-      ></Visualization>
+      <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
     </div>
   </div>
 </template>
@@ -69,8 +46,8 @@ export default {
   props: {
     condition: {
       type: Number,
-      default: 0,
-    },
+      default: 0
+    }
   },
   data() {
     return {
@@ -86,14 +63,14 @@ export default {
       tableData: [],
       currentPage: 1,
       pageSize: 10,
-      total: 0,
+      total: 0
     };
   },
   watch: {
     condition: {
       handler() {},
-      deep: true,
-    },
+      deep: true
+    }
   },
   mounted() {
     this.driver = neo4j.driver(
@@ -135,14 +112,14 @@ export default {
       if (query == "") return;
       session
         .run(query, {})
-        .then(function (result) {
+        .then(function(result) {
           me.clearAll = false;
           me.records = result.records;
           console.log("neo4j 结果", result.records);
           session.close();
           me.closeLoading(false);
         })
-        .catch(function (error) {
+        .catch(function(error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -152,7 +129,7 @@ export default {
      * 关键字查询,查询性能
      */
     executeKeywordCypher(keyword) {
-      let query = `match (u:Author {name:"${keyword}"})  CALL top.chendaye666.simrank.search(u, 'AL-naive') YIELD nid,oid,value RETURN nid,oid,value`;
+      let query = `MATCH (u:Author {name:'${keyword}'})  CALL top.chendaye666.equitruss.search(u,15,10,1) YIELD id,authorId,name,count,community,words,raw RETURN id,authorId,name,count,community,words,raw`;
       // console.log('executeKeywordCypher', query);return;
       let me = this;
       me.records = [];
@@ -162,10 +139,10 @@ export default {
       if (query == "") return;
       session
         .run(query, {})
-        .then(function (result) {
+        .then(function(result) {
           me.clearAll = false;
           me.records = result.records;
-          me.records.forEach((res) => {
+          me.records.forEach(res => {
             me.similars.push(res._fields);
             me.authorIds.push(parseInt(res._fields[1]));
           });
@@ -178,23 +155,30 @@ export default {
           });
           session.close();
         })
-        .then((res) => {
+        .then(res => {
           let session2 = this.driver.session();
           let queryStr = implode(res[1], ",");
           let me = this;
           let query = `match (u:Author) where id(u) in [${queryStr}] return u`;
           session2
             .run(query, {})
-            .then((result) => {
+            .then(result => {
               let nameMap = [];
               me.records = result.records;
-              result.records.forEach((item) => {
-                item.forEach((record) => {
+              result.records.forEach(item => {
+                item.forEach(record => {
                   console.log(record);
-                  nameMap.push({id:record.identity.low, name:record.properties.name});
+                  nameMap.push({
+                    id: record.identity.low,
+                    name: record.properties.name
+                  });
                   me.similars.forEach(f => {
-                    if(f[1] == record.identity.low){
-                      me.authors.push({id:f[0], name:record.properties.name, score: f[2]});
+                    if (f[1] == record.identity.low) {
+                      me.authors.push({
+                        id: f[0],
+                        name: record.properties.name,
+                        score: f[2]
+                      });
                     }
                   });
                 });
@@ -205,12 +189,12 @@ export default {
               me.closeLoading(false);
               session2.close();
             })
-            .catch(function (error) {
+            .catch(function(error) {
               console.log("session2 Cypher 执行失败！", error);
               me.driver.close();
             });
         })
-        .catch(function (error) {
+        .catch(function(error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -229,8 +213,8 @@ export default {
           : start + this.pageSize;
       this.tableData = [...copyArray(this.authors, start, end)];
       console.log([start, end, this.tableData]);
-    },
-  },
+    }
+  }
 };
 </script>
 
