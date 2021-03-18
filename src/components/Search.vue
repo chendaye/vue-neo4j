@@ -78,7 +78,8 @@ export default {
   },
   data() {
     return {
-      keyword: "Jim Gray 0001",
+      // Jim Gray 000  John W. Fattaruso  John Quarles
+      keyword: 'Tom Barclay',
       attrcnt: 10,
       kquery: 15,
       switchval: false,

@@ -153,7 +153,7 @@ export default {
      */
     executeKeywordCypher(keyword) {
       let query = `match (u:Author {name:"${keyword}"})  CALL top.chendaye666.simrank.search(u, 'AL-naive') YIELD nid,oid,value RETURN nid,oid,value`;
-      // console.log('executeKeywordCypher', query);return;
+      console.log('simrank', query);
       let me = this;
       me.records = [];
       me.similars = [];
@@ -216,6 +216,12 @@ export default {
               console.log("session2 Cypher 执行失败！", error);
               me.driver.close();
             });
+        }, reject => {
+          me.$notify.info({
+              title: "提示",
+              message: "节点不存在邻居，请尝试其他节点！",
+            });
+            me.closeLoading(false);
         })
         .catch(function (error) {
           console.log("Cypher 执行失败！", error);

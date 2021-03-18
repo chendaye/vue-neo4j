@@ -202,40 +202,49 @@ export default {
             if (me.community.length > 0) {
               resolve(me.community);
             } else {
-              reject(new Error("社区查询失败！"));
+              reject(new Error("没有匹配的社区！"));
             }
           });
         })
-        .then((res) => {
-          let me = this;
-          me.records = [];
-          let community = res[0];
-          let query = `match res=(u:Author)-[:Article]-(m:Author) where id(u) in [${community.community}] and id(m) in [${community.community}]  return res`;
-          // console.log("fuck", [community, query]);return
-          let session2 = this.driver.session();
-          session2.run(query, {}).then(function (result) {
-            me.records = result.records;
-            // 找属性
-            result.records.forEach((item) => {
-              let path = item._fields[0].start.properties;
-              let words = path.words;
-              me.parseWords(me, words);
+        .then(
+          (res) => {
+            let me = this;
+            me.records = [];
+            let community = res[0];
+            let query = `match res=(u:Author)-[:Article]-(m:Author) where id(u) in [${community.community}] and id(m) in [${community.community}]  return res`;
+            // console.log("fuck", [community, query]);return
+            let session2 = this.driver.session();
+            session2.run(query, {}).then(function (result) {
+              me.records = result.records;
+              // 找属性
+              result.records.forEach((item) => {
+                let path = item._fields[0].start.properties;
+                let words = path.words;
+                me.parseWords(me, words);
+              });
+              let wordarr = community.words.split(",");
+              let wordstr = "";
+              wordarr.forEach((res) => {
+                wordstr += me.wordMap.get(res) + ",";
+              });
+              me.community.forEach((res) => {
+                res.wordstr = wordstr;
+              });
+              me.total = me.community.length;
+              me.tableData = copyArray(me.community, 0, 10);
+              console.log("cwordMap", me.tableData);
+              me.closeLoading(false);
+              session2.close();
             });
-            let wordarr = community.words.split(",");
-            let wordstr = "";
-            wordarr.forEach((res) => {
-              wordstr += me.wordMap.get(res) + ",";
+          },
+          (rejetc) => {
+            me.$notify.info({
+              title: "提示",
+              message: "没有匹配到合适的社区，请调整参数尝试！",
             });
-            me.community.forEach(res => {
-              res.wordstr = wordstr;
-            })
-            me.total = me.community.length;
-            me.tableData = copyArray(me.community, 0, 10);
-            console.log("cwordMap", me.tableData);
             me.closeLoading(false);
-            session2.close();
-          });
-        })
+          }
+        )
         .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
