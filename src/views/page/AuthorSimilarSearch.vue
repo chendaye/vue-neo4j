@@ -169,6 +169,7 @@ export default {
             me.similars.push(res._fields);
             me.authorIds.push(parseInt(res._fields[1]));
           });
+          session.close();
           return new Promise((resolve, reject) => {
             if (me.similars.length > 0) {
               resolve([me.similars, me.authorIds]);
@@ -176,7 +177,6 @@ export default {
               reject(new Error("文章ID查询失败！"));
             }
           });
-          session.close();
         })
         .then((res) => {
           let session2 = this.driver.session();
@@ -191,10 +191,17 @@ export default {
               result.records.forEach((item) => {
                 item.forEach((record) => {
                   console.log(record);
-                  nameMap.push({id:record.identity.low, name:record.properties.name});
-                  me.similars.forEach(f => {
-                    if(f[1] == record.identity.low){
-                      me.authors.push({id:f[0], name:record.properties.name, score: f[2]});
+                  nameMap.push({
+                    id: record.identity.low,
+                    name: record.properties.name,
+                  });
+                  me.similars.forEach((f) => {
+                    if (f[1] == record.identity.low) {
+                      me.authors.push({
+                        id: f[0],
+                        name: record.properties.name,
+                        score: f[2],
+                      });
                     }
                   });
                 });

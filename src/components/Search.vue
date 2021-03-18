@@ -1,8 +1,17 @@
 <template>
   <div class="search">
     <div class="search-input">
-      <el-input v-model="keyword" placeholder="请输入查询内容"></el-input>
+      <div class="input">
+        <el-input v-model="keyword" placeholder="请输入查询内容"></el-input>
+      </div>
+      <div class="input2" v-if="showTruss">
+        <el-input v-model="kquery" placeholder="k-query"></el-input>
+      </div>
+      <div class="input2" v-if="showTruss">
+        <el-input v-model="attrcnt" placeholder="attr count"></el-input>
+      </div>
     </div>
+
     <div class="search-submit">
       <el-button type="success" round @click="Submit" :loading="loading"
         >搜索</el-button
@@ -62,10 +71,16 @@ export default {
       type: Boolean,
       default: false,
     },
+    showTruss: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
-      keyword: "",
+      keyword: "Jim Gray 0001",
+      attrcnt: 10,
+      kquery: 15,
       switchval: false,
       cypherval: false,
       authorArticle: false,
@@ -93,7 +108,11 @@ export default {
   methods: {
     Submit() {
       this.setLoading(true);
-      this.$emit("Submit", this.keyword.trim());
+      if(this.showTruss){
+        this.$emit("Submit", {keyword:this.keyword.trim(), kquery: this.kquery, attrcnt: this.attrcnt});
+      }else{
+        this.$emit("Submit", this.keyword.trim());
+      }
     },
     setLoading(status) {
       this.loading = status;
@@ -115,8 +134,21 @@ export default {
   border-width: 2px;
 }
 .search .search-input {
+  display: flex;
+  flex-direction: row;
+  flex-wrap:wrap;
+  justify-content:space-around;
   flex-grow: 6;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+}
+.search .search-input .input{
+  flex-grow: 8;
+  margin-left:2px;
+}
+
+.search .search-input .input2{
+  margin-left:4px;
+  flex-grow: 1;
 }
 .search .search-submit {
   display: flex;

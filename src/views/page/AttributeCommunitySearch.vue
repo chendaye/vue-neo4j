@@ -3,6 +3,7 @@
     <div class="search">
       <Search
         ref="Search"
+        :showTruss="true"
         @Submit="Submit"
         @CypherKeyword="CypherKeyword"
         @GraphTeble="GraphTeble"
@@ -10,16 +11,50 @@
     </div>
     <div class="show" v-if="graphtable">
       <div class="page_table">
-        <el-table :data="tableData" header-align="center" style="width: 100%" height="89vh">
-          <el-table-column align="center" prop="paperId" label="paperId"></el-table-column>
-          <el-table-column align="center" prop="title" label="title" min-width="300"></el-table-column>
-          <el-table-column align="center" prop="journal" label="journal" min-width="150"></el-table-column>
-          <el-table-column align="center" prop="mdate" label="mdate"></el-table-column>
-          <el-table-column align="center" prop="year" label="year"></el-table-column>
-          <el-table-column align="center" prop="key" label="key"></el-table-column>
-          <el-table-column align="center" prop="publtype" label="publtype"></el-table-column>
-          <el-table-column align="center" prop="rating" label="rating"></el-table-column>
-          <el-table-column align="center" prop="reviewid" label="reviewid"></el-table-column>
+        <el-table
+          :data="tableData"
+          header-align="center"
+          style="width: 100%"
+          height="89vh"
+        >
+          <el-table-column
+            align="center"
+            prop="id"
+            label="id"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="authorId"
+            label="authorId"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="name"
+            label="name"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="count"
+            label="count"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="community"
+            label="community"
+            min-width="300"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="wordstr"
+            label="wordstr"
+            min-width="150"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="raw"
+            label="raw"
+            min-width="300"
+          ></el-table-column>
         </el-table>
       </div>
 
@@ -35,7 +70,11 @@
       </div>
     </div>
     <div class="show" v-else>
-      <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
+      <Visualization
+        @clickNode="handleClickNode"
+        :records="records"
+        :clearAll="clearAll"
+      ></Visualization>
     </div>
   </div>
 </template>
@@ -52,8 +91,8 @@ export default {
   props: {
     condition: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   data() {
     return {
@@ -63,18 +102,19 @@ export default {
       records: [],
       clearAll: false,
       tableData: [],
-      articles: [],
+      community: [],
       tableData: [],
+      wordMap: new Map(),
       currentPage: 1,
       pageSize: 10,
-      total:0,
+      total: 0,
     };
   },
   watch: {
     condition: {
       handler() {},
-      deep: true
-    }
+      deep: true,
+    },
   },
   mounted() {
     this.driver = neo4j.driver(
@@ -116,14 +156,14 @@ export default {
       if (query == "") return;
       session
         .run(query, {})
-        .then(function(result) {
+        .then(function (result) {
           me.clearAll = false;
           me.records = result.records;
           console.log("neo4j 结果", result.records);
           session.close();
           me.closeLoading(false);
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -132,39 +172,71 @@ export default {
     /**
      * 关键字查询,查询性能
      */
-    executeKeywordCypher(keyword) {
-      let query = `match res=(u:Author {name:"${keyword}"})-[r:AuthorPaper]->(p:Paper)  return res order by p.mdate desc`;
+    executeKeywordCypher(data) {
+      let query = `MATCH (u:Author {name:'${data.keyword}'})  CALL top.chendaye666.equitruss.search(u,${data.kquery},${data.attrcnt},1) YIELD id,authorId,name,count,community,words,raw RETURN id,authorId,name,count,community,words,raw`;
       // console.log('executeKeywordCypher', query);return;
       let me = this;
-      me.records = [];
-      me.articles = [];
+      me.community = [];
       this.clearAll = true;
       let session = this.driver.session();
       if (query == "") return;
       session
         .run(query, {})
-        .then(function(result) {
+        .then(function (result) {
           me.clearAll = false;
-          me.records = result.records;
-          result.records.forEach(item => {
-            item.forEach(record => {
-              let articleNode = record.end.properties;
-              me.articles.push(articleNode);
+          result.records.forEach((record) => {
+            let row = record._fields;
+            me.community.push({
+              id: row[0]["low"],
+              authorId: row[1],
+              name: row[2],
+              count: row[3]["low"],
+              community: row[4],
+              words: row[5],
+              raw: row[6],
             });
           });
-          me.total = me.articles.length;
-          me.tableData = copyArray(me.articles, 0, 10);
-          // return new Promise((resolve, reject) => {
-          //   if (articleIdStr.length > 0) {
-          //     resolve(articleIdStr);
-          //   } else {
-          //     reject(new Error("文章ID查询失败！"));
-          //   }
-          // });
-          me.closeLoading(false);
+          console.log("fuck", me.community);
           session.close();
+          return new Promise((resolve, reject) => {
+            if (me.community.length > 0) {
+              resolve(me.community);
+            } else {
+              reject(new Error("社区查询失败！"));
+            }
+          });
         })
-        .catch(function(error) {
+        .then((res) => {
+          let me = this;
+          me.records = [];
+          let community = res[0];
+          let query = `match res=(u:Author)-[:Article]-(m:Author) where id(u) in [${community.community}] and id(m) in [${community.community}]  return res`;
+          // console.log("fuck", [community, query]);return
+          let session2 = this.driver.session();
+          session2.run(query, {}).then(function (result) {
+            me.records = result.records;
+            // 找属性
+            result.records.forEach((item) => {
+              let path = item._fields[0].start.properties;
+              let words = path.words;
+              me.parseWords(me, words);
+            });
+            let wordarr = community.words.split(",");
+            let wordstr = "";
+            wordarr.forEach((res) => {
+              wordstr += me.wordMap.get(res) + ",";
+            });
+            me.community.forEach(res => {
+              res.wordstr = wordstr;
+            })
+            me.total = me.community.length;
+            me.tableData = copyArray(me.community, 0, 10);
+            console.log("cwordMap", me.tableData);
+            me.closeLoading(false);
+            session2.close();
+          });
+        })
+        .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -174,14 +246,26 @@ export default {
       console.log("closeLoading", status);
       this.$refs.Search.setLoading(status);
     },
+    parseWords(me, data) {
+      let words = data.split("@");
+      words.forEach((res) => {
+        let tmp = res.split(":");
+        if (tmp.length == 3 && !me.wordMap.has(tmp[0])) {
+          me.wordMap.set(tmp[0], tmp[1]);
+        }
+      });
+    },
     handleCurrentChange(val) {
       this.tableData = [];
       let start = (val - 1) * this.pageSize;
-      let end = start + this.pageSize >= this.articles.length ? this.articles.length : start + this.pageSize;
-      this.tableData = [...copyArray(this.articles, start, end)];
+      let end =
+        start + this.pageSize >= this.community.length
+          ? this.community.length
+          : start + this.pageSize;
+      this.tableData = [...copyArray(this.community, start, end)];
       console.log([start, end, this.tableData]);
     },
-  }
+  },
 };
 </script>
 
