@@ -8,18 +8,50 @@
         @GraphTeble="GraphTeble"
       />
     </div>
+    <div   class="search">
+      <el-select
+        v-model="selectvalue"
+        @change="filterHandler"
+        placeholder="请选择社区"
+      >
+        <el-option
+          v-for="item in filterCommunity"
+          :key="item.value"
+          :label="item.text"
+          :value="item.value"
+        >
+        </el-option>
+      </el-select>
+    </div>
     <div class="show" v-if="graphtable">
       <div class="page_table">
-        <el-table :data="tableData" header-align="center" style="width: 100%" height="89vh">
-          <el-table-column align="center" prop="paperId" label="paperId"></el-table-column>
-          <el-table-column align="center" prop="title" label="title" min-width="300"></el-table-column>
-          <el-table-column align="center" prop="journal" label="journal" min-width="150"></el-table-column>
-          <el-table-column align="center" prop="mdate" label="mdate"></el-table-column>
-          <el-table-column align="center" prop="year" label="year"></el-table-column>
-          <el-table-column align="center" prop="key" label="key"></el-table-column>
-          <el-table-column align="center" prop="publtype" label="publtype"></el-table-column>
-          <el-table-column align="center" prop="rating" label="rating"></el-table-column>
-          <el-table-column align="center" prop="reviewid" label="reviewid"></el-table-column>
+        <el-table
+          :data="tableData"
+          header-align="center"
+          style="width: 100%"
+          height="89vh"
+        >
+          <el-table-column
+            align="center"
+            prop="nodeId"
+            label="authorId"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="name"
+            label="name"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="communityId"
+            label="communityId"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="intermediateCommunityIds"
+            label="intermediateCommunityIds"
+            min-width="300"
+          ></el-table-column>
         </el-table>
       </div>
 
@@ -34,8 +66,12 @@
         ></el-pagination>
       </div>
     </div>
-    <div class="show" v-else>
-      <Visualization @clickNode="handleClickNode" :records="records" :clearAll="clearAll"></Visualization>
+    <div class="show" v-else >
+      <Visualization
+        @clickNode="handleClickNode"
+        :records="records"
+        :clearAll="clearAll"
+      ></Visualization>
     </div>
   </div>
 </template>
@@ -43,7 +79,7 @@
 import { Visualization } from "components/D3Visualization";
 import Search from "components/Search";
 import { setting } from "config/index";
-import { copyArray } from "utils/index";
+import { copyArray, implode } from "utils/index";
 // https://www.npmjs.com/package/neo4j-driver
 var neo4j = require("neo4j-driver");
 export default {
@@ -52,8 +88,8 @@ export default {
   props: {
     condition: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   data() {
     return {
@@ -63,18 +99,23 @@ export default {
       records: [],
       clearAll: false,
       tableData: [],
-      articles: [],
+      community: [],
+      communityBak: [],
+      communityIds: [],
+      communityMap: new Map(),
+      filterCommunity: [{'text':'全部', 'value': 0}],
       tableData: [],
       currentPage: 1,
-      pageSize: 10,
-      total: 0
+      pageSize: 20,
+      total: 0,
+      selectvalue:0
     };
   },
   watch: {
     condition: {
       handler() {},
-      deep: true
-    }
+      deep: true,
+    },
   },
   mounted() {
     this.driver = neo4j.driver(
@@ -116,14 +157,14 @@ export default {
       if (query == "") return;
       session
         .run(query, {})
-        .then(function(result) {
+        .then(function (result) {
           me.clearAll = false;
           me.records = result.records;
           console.log("neo4j 结果", result.records);
           session.close();
           me.closeLoading(false);
         })
-        .catch(function(error) {
+        .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -133,38 +174,93 @@ export default {
      * 关键字查询,查询性能
      */
     executeKeywordCypher(keyword) {
-      let query = `match res=(u:Author {name:"${keyword}"})-[r:AuthorPaper]->(p:Paper)  return res order by p.mdate desc`;
+      let query = `match (u:Author {name:'${keyword}'})-[:Article]-(m:Author), (m)-[:Article]-(p:Author)  return id(m),id(u),id(p)`;
       // console.log('executeKeywordCypher', query);return;
       let me = this;
-      me.records = [];
-      me.articles = [];
+      me.community = [];
+      let nodeIdSet = new Set();
       this.clearAll = true;
       let session = this.driver.session();
       if (query == "") return;
       session
         .run(query, {})
-        .then(function(result) {
+        .then(function (result) {
           me.clearAll = false;
-          me.records = result.records;
-          result.records.forEach(item => {
-            item.forEach(record => {
-              let articleNode = record.end.properties;
-              me.articles.push(articleNode);
-            });
+          result.records.forEach((record) => {
+            let row = record._fields;
+            nodeIdSet.add(row[0].low);
+            nodeIdSet.add(row[1].low);
+            nodeIdSet.add(row[2].low);
           });
-          me.total = me.articles.length;
-          me.tableData = copyArray(me.articles, 0, 10);
-          // return new Promise((resolve, reject) => {
-          //   if (articleIdStr.length > 0) {
-          //     resolve(articleIdStr);
-          //   } else {
-          //     reject(new Error("文章ID查询失败！"));
-          //   }
-          // });
-          me.closeLoading(false);
+          me.communityIds = [...nodeIdSet];
+          // console.log("louvain", me.communityIds);
           session.close();
+          return new Promise((resolve, reject) => {
+            if (me.communityIds.length > 0) {
+              resolve(me.communityIds);
+            } else {
+              reject(new Error("没有匹配的社区！"));
+            }
+          });
         })
-        .catch(function(error) {
+        .then(
+          (res) => {
+            let me = this;
+            me.records = [];
+            let nodeStr = implode(res, ",");
+            let query = `
+                  CALL gds.louvain.stream({
+                    nodeQuery:'match (u:Author) where id(u) in [${nodeStr}]   return id(u) as id',
+                    relationshipQuery:'match (u:Author)-[r:Article]-(m:Author) where  id(u) in [${nodeStr}] and id(m) in [${nodeStr}] 
+                    return id(u) as source, id(m) as target,r.weight as weight',
+                    includeIntermediateCommunities:true
+                  })
+                  YIELD nodeId, communityId,intermediateCommunityIds
+                  RETURN nodeId,gds.util.asNode(nodeId).name AS name, communityId, intermediateCommunityIds order by communityId asc`;
+            // console.log("GDS", query);return
+            let session2 = this.driver.session();
+            session2.run(query, {}).then(function (result) {
+              // me.records = result.records;
+              // 找属性
+              result.records.forEach((item) => {
+                let info = item._fields;
+                me.community.push({
+                  nodeId: info[0].low,
+                  name: info[1],
+                  communityId: info[2].low,
+                  intermediateCommunityIds: implode(info[3], ","),
+                });
+                // 社区Map
+                if (me.communityMap.has(info[2].low)) {
+                  me.communityMap.get(info[2].low).add(info[0].low);
+                } else {
+                  let tmp = new Set();
+                  tmp.add(info[0].low);
+                  me.communityMap.set(info[2].low, tmp);
+                  me.filterCommunity.push({
+                    text: "community-" + info[2].low,
+                    value: info[2].low,
+                  });
+                }
+              });
+              console.log("info", me.communityMap);
+              me.total = me.community.length;
+              me.communityBak = [...me.community];
+              me.tableData = copyArray(me.community, 0, me.pageSize);
+              console.log("cwordMap", me.tableData);
+              me.closeLoading(false);
+              session2.close();
+            });
+          },
+          (rejetc) => {
+            me.$notify.info({
+              title: "提示",
+              message: "没有匹配到合适的社区，请调整参数尝试！",
+            });
+            me.closeLoading(false);
+          }
+        )
+        .catch(function (error) {
           console.log("Cypher 执行失败！", error);
           me.driver.close();
         });
@@ -174,17 +270,36 @@ export default {
       console.log("closeLoading", status);
       this.$refs.Search.setLoading(status);
     },
+    filterHandler(value) {
+      if (this.graphtable) {
+        // table
+        console.log(value);
+        this.community = this.communityBak.filter((res) => {
+          if (value == 0) return true;
+          return res.communityId == value;
+        });
+        this.total = this.community.length;
+        this.tableData = copyArray(this.community, 0, this.pageSize);
+        this.currentPage = 1;
+      } else {
+        // graph
+        let community = implode([...this.communityMap.get(value)], ',');
+        console.log('graph', community);
+        let query = `match res=(u:Author)-[:Article]-(p:Author) where  id(u) in [${community}] and id(p) in [${community}] return res`;
+        this.executeCypher(query);
+      }
+    },
     handleCurrentChange(val) {
       this.tableData = [];
       let start = (val - 1) * this.pageSize;
       let end =
-        start + this.pageSize >= this.articles.length
-          ? this.articles.length
+        start + this.pageSize >= this.community.length
+          ? this.community.length
           : start + this.pageSize;
-      this.tableData = [...copyArray(this.articles, start, end)];
+      this.tableData = [...copyArray(this.community, start, end)];
       console.log([start, end, this.tableData]);
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -201,14 +316,14 @@ export default {
   width: 100%;
   margin-bottom: 5px;
   margin-top: 5px;
-  height: 6vh;
+  height: 5vh;
 }
 .show {
   display: flex;
   flex-direction: column;
-  flex-grow: 25;
+  flex-grow: 22;
   width: 100%;
-  /* overflow: auto; */
-  /* height: 89vh; */
+  overflow: auto;
+  /* height: 70vh; */
 }
 </style>

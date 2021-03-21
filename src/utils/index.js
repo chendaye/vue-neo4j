@@ -42,3 +42,4 @@ export const parseWords = (data) => {
   }
   return arr;
 }
+
