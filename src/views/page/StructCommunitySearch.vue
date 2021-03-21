@@ -108,7 +108,8 @@ export default {
       currentPage: 1,
       pageSize: 20,
       total: 0,
-      selectvalue:0
+      selectvalue:0,
+      currentCommunity:0
     };
   },
   watch: {
@@ -230,6 +231,10 @@ export default {
                   communityId: info[2].low,
                   intermediateCommunityIds: implode(info[3], ","),
                 });
+                // 当前节点所在的社区
+                if(info[1] == keyword){
+                  me.currentCommunity = info[2].low;
+                }
                 // 社区Map
                 if (me.communityMap.has(info[2].low)) {
                   me.communityMap.get(info[2].low).add(info[0].low);
@@ -243,6 +248,10 @@ export default {
                   });
                 }
               });
+              // graph
+              me.selectvalue = me.currentCommunity;
+              me.getCommunity(me.currentCommunity);
+              // table
               console.log("info", me.communityMap);
               me.total = me.community.length;
               me.communityBak = [...me.community];
@@ -283,11 +292,16 @@ export default {
         this.currentPage = 1;
       } else {
         // graph
+        this.getCommunity(value);
+      }
+    },
+
+    getCommunity(value){
+        // graph
         let community = implode([...this.communityMap.get(value)], ',');
         console.log('graph', community);
         let query = `match res=(u:Author)-[:Article]-(p:Author) where  id(u) in [${community}] and id(p) in [${community}] return res`;
         this.executeCypher(query);
-      }
     },
     handleCurrentChange(val) {
       this.tableData = [];

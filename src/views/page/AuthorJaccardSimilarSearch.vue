@@ -18,18 +18,28 @@
         >
           <el-table-column
             align="center"
-            prop="nodeId"
-            label="authorId"
+            prop="node1"
+            label="node1"
           ></el-table-column>
           <el-table-column
             align="center"
-            prop="name"
-            label="name"
+            prop="author1"
+            label="author1"
           ></el-table-column>
           <el-table-column
             align="center"
-            prop="score"
-            label="score"
+            prop="node2"
+            label="node2"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="author2"
+            label="author2"
+          ></el-table-column>
+          <el-table-column
+            align="center"
+            prop="similarity"
+            label="similarity"
           ></el-table-column>
         </el-table>
       </div>
@@ -45,7 +55,7 @@
         ></el-pagination>
       </div>
     </div>
-    <div class="show" v-else >
+    <div class="show" v-else>
       <Visualization
         @clickNode="handleClickNode"
         :records="records"
@@ -81,7 +91,6 @@ export default {
       community: [],
       communityBak: [],
       communityIds: [],
-      filterCommunity: [{'text':'全部', 'value': 0}],
       tableData: [],
       currentPage: 1,
       pageSize: 20,
@@ -177,7 +186,7 @@ export default {
             if (me.communityIds.length > 0) {
               resolve(me.communityIds);
             } else {
-              reject(new Error("没有匹配的社区！"));
+              reject(new Error("没有匹配的节点！"));
             }
           });
         })
@@ -186,13 +195,14 @@ export default {
             let me = this;
             let nodeStr = implode(res, ",");
             let query = `
-                  CALL gds.betweenness.stream({
+                  CALL gds.nodeSimilarity.stream({
                     nodeQuery:'match (u:Author) where id(u) in [${nodeStr}]   return id(u) as id',
                     relationshipQuery:'match (u:Author)-[r:Article]-(m:Author) where  id(u) in [${nodeStr}] and id(m) in [${nodeStr}] 
                     return id(u) as source, id(m) as target,r.weight as weight'
                   })
-                  YIELD nodeId, score
-                  RETURN nodeId,gds.util.asNode(nodeId).name AS name, score order by score desc`;
+                  YIELD node1, node2, similarity
+                  RETURN node1,gds.util.asNode(node1).name AS author1,node2, gds.util.asNode(node2).name AS author2, similarity 
+                  ORDER BY similarity DESCENDING, author1, node2`;
             // console.log("GDS-betweenness", query);return
             let session2 = this.driver.session();
             session2.run(query, {}).then(function (result) {
@@ -200,20 +210,22 @@ export default {
               let nodeRes = [];
               result.records.forEach((item) => {
                 let info = item._fields;
-                nodeRes.push(info[0].low);
+                // nodeRes.push(info[0].low);
+                // nodeRes.push(info[0].low);
                 me.community.push({
-                  nodeId: info[0].low,
-                  name: info[1],
-                  score: info[2],
+                  node1: info[0].low,
+                  author1: info[1],
+                  node2: info[2].low,
+                  author2: info[3],
+                  similarity: info[4],
                 });
-                
               });
               me.total = me.community.length;
               me.tableData = copyArray(me.community, 0, me.pageSize);
               console.log("cwordMap", me.tableData);
               // show grapg
-              let show = copyArray(nodeRes, 0, 30);
-              me.getGrapg(implode(show, ','));
+              let show = copyArray(res, 0, 30);
+              me.getGrapg(implode(show, ","));
               me.closeLoading(false);
               session2.close();
             });
@@ -231,17 +243,17 @@ export default {
           me.driver.close();
         });
     },
-    getGrapg(value){
-        let query = `match res=(u:Author)-[:Article]-(p:Author) where  id(u) in [${value}] and id(p) in [${value}] return res`;
-        console.log('getGrapg', query);
-        this.executeCypher(query);
+    getGrapg(value) {
+      let query = `match res=(u:Author)-[:Article]-(p:Author) where  id(u) in [${value}] and id(p) in [${value}] return res`;
+      console.log("getGrapg", query);
+      this.executeCypher(query);
     },
 
     closeLoading(status) {
       console.log("closeLoading", status);
       this.$refs.Search.setLoading(status);
     },
-    
+
     handleCurrentChange(val) {
       this.tableData = [];
       let start = (val - 1) * this.pageSize;
