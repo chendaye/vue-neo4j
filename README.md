@@ -48,11 +48,11 @@
 └── static                          纯静态资源，不会被wabpack构建。<br/>
 
 
+# 性能测试
 
+[地址](http://browser.oneapm.com/index.html#/browser/9992975/overview)
 
-
-
-match (n:Author)-[:AuthorPaper]->(u:Paper) where u.paperId in ["0","1","12","13","14","15","16","17","18","19","1123","123","145","1451","1452","1453","1454","1455","1456","1457","1458","1459"] return u
-
-
-match (n:Author)-[:AuthorPaper]->(u:Paper) where id(u) in [2718675,2720108,2720109,2718672,2718779,2720107,2718668,2718656,2718674] return u
+```
+account: 15271835241
+passwd: chendaye666
+```
