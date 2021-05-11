@@ -163,6 +163,7 @@ export default {
     // https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-create-node-and-add-labels-and-properties
     // CREATE (n:Person {name: 'Andy', title: 'Developer'})
     Submit() {
+      me.loading = true;
       this.tableData.forEach(node => {
         let label = "Author";
         let query = `CREATE (n:${label} {title: '${node.title}'})`;
@@ -189,6 +190,7 @@ export default {
         })
         .catch(function(error) {
           console.log("Cypher 执行失败！", error);
+           me.loading = false;
           me.driver.close();
         });
     },
