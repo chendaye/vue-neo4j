@@ -32,9 +32,13 @@
         <el-submenu index="4">
           <template slot="title">研究团体搜索</template>
           <el-menu-item index="4-1">结构上紧密的研究团体查询</el-menu-item>
-          <el-menu-item index="4-2"
-            >结构和属性都紧密的研究团体查询</el-menu-item
-          >
+          <el-menu-item index="4-2">结构和属性都紧密的研究团体查询</el-menu-item>
+        </el-submenu>
+
+        <el-submenu index="5">
+          <!-- https://www.npmjs.com/package/vue-csv-import -->
+          <template slot="title">其他</template>
+          <el-menu-item index="5-1">CSV上传</el-menu-item>
         </el-submenu>
       </el-menu>
     </div>
@@ -54,6 +58,7 @@ import AuthorJaccardSimilarSearch from "./page/AuthorJaccardSimilarSearch";
 import AuthorCentralitySearch from "./page/AuthorCentralitySearch";
 import StructCommunitySearch from "./page/StructCommunitySearch";
 import AttributeCommunitySearch from "./page/AttributeCommunitySearch";
+import CsvUpload from "./page/CsvUpload";
 export default {
   name: "Neo4jSearch",
   components: {
@@ -67,12 +72,13 @@ export default {
     AuthorCentralitySearch,
     StructCommunitySearch,
     AttributeCommunitySearch,
+    CsvUpload,
   },
   props: {
     condition: {
       type: Number,
-      default: 0,
-    },
+      default: 0
+    }
   },
   data() {
     return {
@@ -89,14 +95,15 @@ export default {
         "3-1": "AuthorCentralitySearch", // 作者中心度查询
         "4-1": "StructCommunitySearch", // 结构紧密社区搜索
         "4-2": "AttributeCommunitySearch", // 属性紧密社区搜索
-      },
+        "5-1": "CsvUpload" // CSV上传
+      }
     };
   },
   watch: {
     condition: {
       handler() {},
-      deep: true,
-    },
+      deep: true
+    }
   },
   mounted() {},
   created() {},
@@ -105,8 +112,8 @@ export default {
     handleSelect(key, keyPath) {
       this.page = this.menu[key];
       console.log(key, this.pageIndex);
-    },
-  },
+    }
+  }
 };
 </script>
 

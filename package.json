@@ -25,7 +25,9 @@
   "dependencies": {
     "element-ui": "^2.15.1",
     "jquery": "^3.2.1",
+    "jschardet": "^3.0.0",
     "neo4j-driver": "^4.2.2",
+    "papaparse": "^5.3.0",
     "uuid": "^8.3.2",
     "vue": "^2.6.12",
     "vue-neo4j": "^0.4.5",
