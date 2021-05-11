@@ -10,22 +10,29 @@
         text-color="#fff"
         active-text-color="#ffd04b"
       >
-        <el-menu-item index="1">作者文章检索</el-menu-item>
-        <el-menu-item index="2">作者合作对象检索</el-menu-item>
-        <el-menu-item index="3">文章作者模糊搜索</el-menu-item>
-        <el-menu-item index="4">作者文章关键词搜索</el-menu-item>
-        <el-menu-item index="5">合作对象文章检索</el-menu-item>
-        <el-submenu index="6">
-          <template slot="title">作者相似度查询</template>
-          <el-menu-item index="6-1">Simrank</el-menu-item>
-          <el-menu-item index="6-2">Jaccard Similarity</el-menu-item
-          >
+        <el-submenu index="1">
+          <template slot="title">基础信息检索</template>
+          <el-menu-item index="1-1">作者文章检索</el-menu-item>
+          <el-menu-item index="1-2">作者合作对象检索</el-menu-item>
+          <el-menu-item index="1-3">文章作者模糊搜索</el-menu-item>
+          <el-menu-item index="1-4">作者文章关键词搜索</el-menu-item>
+          <el-menu-item index="1-5">合作对象文章检索</el-menu-item>
         </el-submenu>
-        <el-menu-item index="7">作者中心度查询</el-menu-item>
-        <el-submenu index="8">
+
+        <el-submenu index="2">
+          <template slot="title">作者相似度查询</template>
+          <el-menu-item index="2-1">Simrank</el-menu-item>
+          <el-menu-item index="2-2">Jaccard Similarity</el-menu-item>
+        </el-submenu>
+        <el-submenu index="3">
+          <template slot="title">作者中心度查询</template>
+          <!-- 通过某点的最短路径的数量 -->
+          <el-menu-item index="3-1">Betweenness Centrality</el-menu-item>
+        </el-submenu>
+        <el-submenu index="4">
           <template slot="title">研究团体搜索</template>
-          <el-menu-item index="8-1">结构上紧密的研究团体查询</el-menu-item>
-          <el-menu-item index="8-2"
+          <el-menu-item index="4-1">结构上紧密的研究团体查询</el-menu-item>
+          <el-menu-item index="4-2"
             >结构和属性都紧密的研究团体查询</el-menu-item
           >
         </el-submenu>
@@ -72,16 +79,16 @@ export default {
       activeIndex: "1",
       page: "AuthorArticleSearch",
       menu: {
-        1: "AuthorArticleSearch", // 作者文章检索
-        2: "AuthorCoopratorSearch", // 作者合作对象检索
-        3: "ArticleAuthorSearch", // 文章作者模糊搜索
-        4: "AuthorKeywordSearch", // 作者文章关键词搜索
-        5: "CoopratorArticleSearch", // 合作对象文章检索
-        "6-1": "AuthorSimilarSearch", // 作者相似度查询
-        "6-2": "AuthorJaccardSimilarSearch", // 作者相似度查询
-        7: "AuthorCentralitySearch", // 作者中心度查询
-        "8-1": "StructCommunitySearch", // 结构紧密社区搜索
-        "8-2": "AttributeCommunitySearch", // 属性紧密社区搜索
+        "1-1": "AuthorArticleSearch", // 作者文章检索
+        "1-2": "AuthorCoopratorSearch", // 作者合作对象检索
+        "1-3": "ArticleAuthorSearch", // 文章作者模糊搜索
+        "1-4": "AuthorKeywordSearch", // 作者文章关键词搜索
+        "1-": "CoopratorArticleSearch", // 合作对象文章检索
+        "2-1": "AuthorSimilarSearch", // 作者相似度查询
+        "2-2": "AuthorJaccardSimilarSearch", // 作者相似度查询
+        "3-1": "AuthorCentralitySearch", // 作者中心度查询
+        "4-1": "StructCommunitySearch", // 结构紧密社区搜索
+        "4-2": "AttributeCommunitySearch", // 属性紧密社区搜索
       },
     };
   },
