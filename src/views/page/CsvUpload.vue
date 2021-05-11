@@ -163,12 +163,12 @@ export default {
     // https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-create-node-and-add-labels-and-properties
     // CREATE (n:Person {name: 'Andy', title: 'Developer'})
     Submit() {
-      me.loading = true;
+      this.loading = true;
       this.tableData.forEach(node => {
         let label = "Author";
         let query = `CREATE (n:${label} {title: '${node.title}'})`;
         // console.log(query);return
-        this.executeCypher(query);
+        this.executeCypher(query); // MATCH (n:Author) WHERE n.title =~ 'kkk.*'  RETURN n 
       });
     },
 
