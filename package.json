@@ -30,6 +30,7 @@
     "papaparse": "^5.3.0",
     "uuid": "^8.3.2",
     "vue": "^2.6.12",
+    "vue-cookies": "^1.7.4",
     "vue-neo4j": "^0.4.5",
     "vue-router": "^3.5.1",
     "vue-styled-components": "^1.6.0",

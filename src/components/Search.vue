@@ -78,7 +78,7 @@ export default {
   },
   data() {
     return {
-      // Jim Gray 000  John W. Fattaruso  John Quarles
+      // Jim Gray 000  John W. Fattaruso  John Quarles  Michael Wehr
       keyword: 'Tom Barclay',
       attrcnt: 10,
       kquery: 15,
@@ -104,7 +104,14 @@ export default {
     },
   },
   mounted() {},
-  created() {},
+  created() {
+    let page = this.$cookies.get('queryWord');
+    if(page == '1-5'){
+      this.keyword = 'Michael Wehr';
+    }else{
+      this.keyword = 'Tom Barclay';
+    }
+  },
 
   methods: {
     Submit() {

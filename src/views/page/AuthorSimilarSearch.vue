@@ -152,7 +152,7 @@ export default {
      * 关键字查询,查询性能
      */
     executeKeywordCypher(keyword) {
-      let query = `match (u:Author {name:"${keyword}"})  CALL top.chendaye666.simrank.search(u, 'AL-naive') YIELD nid,oid,value RETURN nid,oid,value`;
+      let query = `match (u:Author {name:"${keyword}"})  CALL top.chendaye666.simrank.search(u, 'AL-naive', 'Author', 'Article') YIELD nid,oid,value RETURN nid,oid,value`;
       console.log('simrank', query);
       let me = this;
       me.records = [];

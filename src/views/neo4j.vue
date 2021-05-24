@@ -89,7 +89,7 @@ export default {
         "1-2": "AuthorCoopratorSearch", // 作者合作对象检索
         "1-3": "ArticleAuthorSearch", // 文章作者模糊搜索
         "1-4": "AuthorKeywordSearch", // 作者文章关键词搜索
-        "1-": "CoopratorArticleSearch", // 合作对象文章检索
+        "1-5": "CoopratorArticleSearch", // 合作对象文章检索
         "2-1": "AuthorSimilarSearch", // 作者相似度查询
         "2-2": "AuthorJaccardSimilarSearch", // 作者相似度查询
         "3-1": "AuthorCentralitySearch", // 作者中心度查询
@@ -111,7 +111,8 @@ export default {
   methods: {
     handleSelect(key, keyPath) {
       this.page = this.menu[key];
-      console.log(key, this.pageIndex);
+      this.$cookies.set('queryWord', key, 0) 
+      console.log(key, this.page);
     }
   }
 };
